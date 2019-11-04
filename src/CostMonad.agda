@@ -35,19 +35,19 @@ private
   -- foldr with atomic operation
   foldr-compl₁ : {A B : Set}{n : ℕ} → (v : Vec A n) → (A → B → B costs 1) → B → B costs n
   foldr-compl₁ [] f b = return b
-  foldr-compl₁ (x ∷ xs) f b = (foldr-compl₁ xs f b) >>=₁ (λ b' → f x b')
+  foldr-compl₁ (x ∷ xs) f b = foldr-compl₁ xs f b >>=₁ λ b' → f x b'
 
   -- foldr with non-atomic operation
   foldr-compl : {A B : Set}{n k : ℕ} → (v : Vec A n) → (A → B → B costs k) → B → B costs (n * k)
   foldr-compl [] f b = return b
-  foldr-compl (x ∷ xs) f b = same-cost-≡ refl ((foldr-compl xs f b) >>=₁ (λ b' → f x b'))
+  foldr-compl (x ∷ xs) f b = same-cost-≡ refl (foldr-compl xs f b >>=₁ λ b' → f x b')
 
   -- map with atomic operation
   map-compl₁ : {A B : Set}{n : ℕ} → (A → B costs 1) → Vec A n → (Vec B n) costs n
   map-compl₁ f [] = return []
-  map-compl₁ f (x ∷ xs) = ((f x) >>=₂ (λ b → return (b ∷ raw (map-compl₁ f xs))))
+  map-compl₁ f (x ∷ xs) = f x >>=₂ λ b → return (b ∷ raw (map-compl₁ f xs))
 
   -- map with non-atomic operation
   map-compl : {A B : Set}{n k : ℕ} → (A → B costs k) → Vec A n → (Vec B n) costs (n * k)
   map-compl f [] = return []
-  map-compl f (x ∷ xs) = ((f x) >>=₂ (λ b → return (b ∷ (raw (map-compl f xs)))))
+  map-compl f (x ∷ xs) = f x >>=₂ λ b → return (b ∷ (raw (map-compl f xs)))
