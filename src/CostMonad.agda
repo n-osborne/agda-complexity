@@ -31,6 +31,7 @@ same-cost-≡ = subst (_costs_ _)
 
 private
   open import Data.Vec hiding (_>>=_)
+  open import Data.Bool
 
   -- foldr with atomic operation
   foldr-compl₁ : {A B : Set}{n : ℕ} → (v : Vec A n) → (A → B → B costs 1) → B → B costs n
@@ -51,3 +52,19 @@ private
   map-compl : {A B : Set}{n k : ℕ} → (A → B costs k) → Vec A n → (Vec B n) costs (n * k)
   map-compl f [] = return []
   map-compl f (x ∷ xs) = f x >>=₂ λ b → return (b ∷ (raw (map-compl f xs)))
+
+  postulate
+    A   : Set
+    as₃ : Vec A 3
+    f   : A → Bool costs 1
+    f₂  : A → Bool costs 2
+    g   : Bool → Bool → Bool costs 1
+    
+  ex₁ : Bool costs 3
+  ex₁ = foldr-compl (true ∷ true ∷ false ∷ []) g true
+
+  ex₂ : Vec Bool 3 costs 3
+  ex₂ = map-compl f as₃
+
+  ex₃ : Vec Bool 3 costs 6
+  ex₃ = map-compl f₂ as₃
