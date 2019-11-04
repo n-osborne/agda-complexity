@@ -29,6 +29,11 @@ compl a >>=₂ f = compl (raw (f a))
 same-cost-≡ : ∀ {A : Set}{n m : ℕ} → n ≡ m → A costs n → A costs m
 same-cost-≡ = subst (_costs_ _)
 
+-- lift takes an unary function and makes it an atomic operation
+-- (Note: use partial application for n-ary functions with n > 1)
+lift : {A B : Set} → (A → B) → (A → B costs 1)
+lift f = λ x → compl (f x)
+
 private
   open import Data.Vec hiding (_>>=_)
   open import Data.Bool
