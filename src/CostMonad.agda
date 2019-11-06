@@ -12,7 +12,7 @@
 -- Instead, I propose to use lifted operations.
 -- In doing so, I hope to be able to build a framework to define different cost models.
 
--- {-# OPTIONS --safe #-}
+{-# OPTIONS --safe #-}
 
 module CostMonad where
 
@@ -52,42 +52,31 @@ same-cost-≡ = subst (_costs_ _)
 lift : {A B : Set} → (A → B) → (A → B costs 1)
 lift f = λ x → compute (f x)
 
-private
+
+module Examples (A B : Set)(f₁ : A → B costs 1)(f₂ : A → B costs 2)(g : A → B → B costs 2)(b : B) where
+  -- a little module to provide some examples with Vectors
+  -- should go in a library on its own providing generic programming
+  
   open import Data.Vec hiding (_>>=_)
-  open import Data.Bool
 
-  -- foldr with atomic operation
-  foldr-compute₁ : {A B : Set}{n : ℕ} → (v : Vec A n) → (A → B → B costs 1) → B → B costs n
-  foldr-compute₁ [] f b = compute b
-  foldr-compute₁ (x ∷ xs) f b = foldr-compute₁ xs f b >>=₁ λ b' → f x b'
-
-  -- foldr with non-atomic operation
+  -- foldr with cost
   foldr-compute : {A B : Set}{n k : ℕ} → (v : Vec A n) → (A → B → B costs k) → B → B costs (n * k)
   foldr-compute [] f b = compute b
   foldr-compute (x ∷ xs) f b = same-cost-≡ refl (foldr-compute xs f b >>=₁ λ b' → f x b')
 
-  -- map with atomic operation
-  map-compute₁ : {A B : Set}{n : ℕ} → (A → B costs 1) → Vec A n → (Vec B n) costs n
-  map-compute₁ f [] = compute []
-  map-compute₁ f (x ∷ xs) = f x >>=₂ λ b → compute (b ∷ raw (map-compute₁ f xs))
-
-  -- map with non-atomic operation
+  -- map with cost
   map-compute : {A B : Set}{n k : ℕ} → (A → B costs k) → Vec A n → (Vec B n) costs (n * k)
   map-compute f [] = compute []
   map-compute f (x ∷ xs) = f x >>=₂ λ b → compute (b ∷ (raw (map-compute f xs)))
 
-  postulate
-    A   : Set
-    as₃ : Vec A 3
-    f   : A → Bool costs 1
-    f₂  : A → Bool costs 2
-    g   : Bool → Bool → Bool costs 1
-    
-  ex₁ : Bool costs 3
-  ex₁ = foldr-compute (true ∷ true ∷ false ∷ []) g true
+  -- some examples
+  -- these does not typecheck if you change the cost of the function or the lenght of the Vec 
+  ex₁ : Vec A 3 → B costs 6
+  ex₁ as₃ = foldr-compute as₃ g b
 
-  ex₂ : Vec Bool 3 costs 3
-  ex₂ = map-compute f as₃
+  ex₂ : Vec A 3 → Vec B 3 costs 3
+  ex₂ as₃ = map-compute f₁ as₃
 
-  ex₃ : Vec Bool 3 costs 6
-  ex₃ = map-compute f₂ as₃
+  ex₃ : Vec A 3 → Vec B 3 costs 6
+  ex₃ as₃ = map-compute f₂ as₃
+
