@@ -1,10 +1,28 @@
+----------------------------------------------------------
+-- project : agda-complexity
+-- file    : CostMonad.agda
+-- content : CostMonad Definition
+-- author  : Nicolas Osborne
+----------------------------------------------------------
+
+-- This module proposes a way to compute time complexity at the type level
+-- in a monad.
+-- The CostMonad is widely inspired by Danielsson's Thunk monad.
+-- The main difference is that I don't use ticks inside the algorithm.
+-- Instead, I propose to use lifted operations.
+-- In doing so, I hope to be able to build a framework to define different cost models.
+
+-- {-# OPTIONS --safe #-}
+
+module CostMonad where
+
 open import Data.Nat
 open import Data.Nat.Properties
 open import Relation.Binary.PropositionalEquality
 
-module CostMonad where
-
--- the CostMonad and its primitive
+-- _costs_ datatype is parameterized by a Set and a ℕ
+-- the ℕ is a phantom variable: hidden in the type, not visible in the value.
+-- Hence the constructor (compute) only take one argument: the type parameter
 data _costs_ (A : Set) (n : ℕ) : Set where
   compute : A → A costs n
 
